@@ -1,0 +1,6 @@
+{
+  "name": "Playground Web",
+  "description": "Un playground interattivo per scrivere ed esercitarsi con HTML, CSS, Tailwind e JavaScript, con preview dal vivo e salvataggio locale.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
