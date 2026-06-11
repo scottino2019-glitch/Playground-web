@@ -227,6 +227,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     }
   };
 
+  // Shared precise font & layout style configuration to guarantee 1:1 parity and prevent cursor drift across browsers
+  const sharedEditorStyle: React.CSSProperties = {
+    fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontSize: '13px',
+    lineHeight: '20px',
+    padding: '16px',
+    margin: '0',
+    border: '0',
+    outline: 'none',
+    boxSizing: 'border-box',
+    tabSize: 2,
+    OTabSize: 2,
+    MozTabSize: 2,
+    WebkitTabSize: 2,
+    letterSpacing: '0px',
+    wordSpacing: '0px',
+    textTransform: 'none',
+    whiteSpace: wrapText ? 'pre-wrap' : 'pre',
+    wordBreak: wrapText ? 'break-all' : 'normal',
+    overflowY: 'scroll',
+    overflowX: wrapText ? 'hidden' : 'auto',
+  };
+
   return (
     <div id={`editor-container-${id}`} className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl transition-all focus-within:ring-1 focus-within:ring-indigo-500/50">
       
@@ -392,16 +415,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           {syntaxHighlight && (
             <pre
               ref={highlightRef}
-              style={{ 
-                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                tabSize: 2,
-                OTabSize: 2,
-                MozTabSize: 2,
-                WebkitTabSize: 2,
-              }}
-              className={`absolute inset-0 w-full h-full px-4 py-4 pointer-events-none select-none text-slate-100 font-mono text-[13px] leading-[20px] border-0 m-0 overflow-y-scroll scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 ${
-                wrapText ? 'whitespace-pre-wrap break-all overflow-x-hidden' : 'whitespace-pre overflow-x-auto'
-              }`}
+              style={sharedEditorStyle}
+              className="absolute inset-0 w-full h-full pointer-events-none select-none text-slate-100 scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700"
               dangerouslySetInnerHTML={{ __html: highlightCode(value.endsWith('\n') ? value + ' ' : value, language) }}
             />
           )}
@@ -409,19 +424,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           {/* Code Input Layer (transparent text, visible caret) */}
           <textarea
             ref={textareaRef}
-            style={{ 
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-              tabSize: 2,
-              OTabSize: 2,
-              MozTabSize: 2,
-              WebkitTabSize: 2,
-            }}
-            className={`absolute inset-0 w-full h-full px-4 py-4 bg-transparent outline-none resize-none overflow-y-scroll scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 font-mono text-[13px] leading-[20px] border-0 m-0 ${
+            style={sharedEditorStyle}
+            className={`absolute inset-0 w-full h-full bg-transparent resize-none scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 ${
               syntaxHighlight 
                 ? 'text-transparent caret-indigo-400' 
                 : 'text-slate-100 caret-white'
-            } ${
-              wrapText ? 'whitespace-pre-wrap break-all overflow-x-hidden' : 'whitespace-pre overflow-x-auto'
             }`}
             value={value}
             onChange={(e) => onChange(e.target.value)}
