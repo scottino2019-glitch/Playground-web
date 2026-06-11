@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Copy, Trash2, Code, Search, Sparkles, Check, WrapText } from 'lucide-react';
+import { highlightCode } from '../utils/highlighter';
 
 interface CodeEditorProps {
   id: string;
@@ -32,6 +33,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineGutterRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const snippetsRef = useRef<HTMLDivElement>(null);
 
   // Close snippets dropdown when clicking outside
@@ -45,10 +47,16 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // Synchronize gutter scrolling with textarea scrolling
+  // Synchronize gutter scrolling and highlighted pre block with textarea scrolling
   const handleScroll = () => {
-    if (textareaRef.current && lineGutterRef.current) {
-      lineGutterRef.current.scrollTop = textareaRef.current.scrollTop;
+    if (textareaRef.current) {
+      if (lineGutterRef.current) {
+        lineGutterRef.current.scrollTop = textareaRef.current.scrollTop;
+      }
+      if (highlightRef.current) {
+        highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+        highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
+      }
     }
   };
 
@@ -363,22 +371,34 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           ))}
         </div>
 
-        {/* Code Input (Scrolls both ways or wraps) */}
-        <textarea
-          ref={textareaRef}
-          className={`flex-1 min-h-full px-4 py-4 bg-transparent text-slate-100 outline-none resize-none overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 ${
-            wrapText ? 'white-space-pre-wrap break-all' : 'white-space-pre overflow-x-auto'
-          }`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onScroll={handleScroll}
-          onKeyDown={handleKeyDown}
-          onSelect={handleTextareaSelection}
-          spellCheck={false}
-          autoComplete="off"
-          autoCapitalize="off"
-          placeholder={`${title} - Scrivi qui...`}
-        />
+        {/* Input Wrapper containing identical overlapping pre (backdrop) + textarea (input layer) */}
+        <div className="flex-1 relative overflow-hidden h-full bg-slate-900/30">
+          {/* Highlight Viewer Backdrop */}
+          <pre
+            ref={highlightRef}
+            className={`absolute inset-0 px-4 py-4 pointer-events-none select-none text-slate-100 font-mono text-[13px] leading-[20px] overflow-hidden ${
+              wrapText ? 'whitespace-pre-wrap break-all' : 'whitespace-pre overflow-x-hidden'
+            }`}
+            dangerouslySetInnerHTML={{ __html: highlightCode(value, language) }}
+          />
+
+          {/* Code Input Layer (transparent text, visible caret) */}
+          <textarea
+            ref={textareaRef}
+            className={`absolute inset-0 w-full h-full px-4 py-4 bg-transparent text-transparent caret-indigo-400 outline-none resize-none overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 font-mono text-[13px] leading-[20px] ${
+              wrapText ? 'whitespace-pre-wrap break-all' : 'whitespace-pre overflow-x-auto'
+            }`}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onScroll={handleScroll}
+            onKeyDown={handleKeyDown}
+            onSelect={handleTextareaSelection}
+            spellCheck={false}
+            autoComplete="off"
+            autoCapitalize="off"
+            placeholder={`${title} - Scrivi qui...`}
+          />
+        </div>
       </div>
 
       {/* Editor Status Bar */}
