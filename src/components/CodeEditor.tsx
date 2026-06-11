@@ -392,18 +392,30 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           {syntaxHighlight && (
             <pre
               ref={highlightRef}
-              style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
-              className={`absolute inset-0 w-full h-full px-4 py-4 pointer-events-none select-none text-slate-100 font-mono text-[13px] leading-[20px] border-0 m-0 overflow-y-scroll scrollbar-thin scrollbar-track-transparent scrollbar-thumb-transparent ${
+              style={{ 
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                tabSize: 2,
+                OTabSize: 2,
+                MozTabSize: 2,
+                WebkitTabSize: 2,
+              }}
+              className={`absolute inset-0 w-full h-full px-4 py-4 pointer-events-none select-none text-slate-100 font-mono text-[13px] leading-[20px] border-0 m-0 overflow-y-scroll scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 ${
                 wrapText ? 'whitespace-pre-wrap break-all overflow-x-hidden' : 'whitespace-pre overflow-x-auto'
               }`}
-              dangerouslySetInnerHTML={{ __html: highlightCode(value, language) }}
+              dangerouslySetInnerHTML={{ __html: highlightCode(value.endsWith('\n') ? value + ' ' : value, language) }}
             />
           )}
 
           {/* Code Input Layer (transparent text, visible caret) */}
           <textarea
             ref={textareaRef}
-            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+            style={{ 
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              tabSize: 2,
+              OTabSize: 2,
+              MozTabSize: 2,
+              WebkitTabSize: 2,
+            }}
             className={`absolute inset-0 w-full h-full px-4 py-4 bg-transparent outline-none resize-none overflow-y-scroll scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 font-mono text-[13px] leading-[20px] border-0 m-0 ${
               syntaxHighlight 
                 ? 'text-transparent caret-indigo-400' 

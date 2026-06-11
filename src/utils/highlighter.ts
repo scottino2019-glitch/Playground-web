@@ -8,11 +8,13 @@ function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 export function highlightCode(code: string, language: 'html' | 'css' | 'js'): string {
-  if (!code) return '<span class="text-slate-500 italic">Vuoto ...</span>';
+  if (!code) return '<span class="text-slate-500">Vuoto ...</span>';
   
   // First escape HTML entities to render code safely and prevent script injection in current context
   let escaped = escapeHtml(code);
@@ -28,7 +30,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
   if (language === 'html') {
     // 1. Isolate HTML Comments: <!-- ... -->
     escaped = escaped.replace(/&lt;!--([\s\S]*?)--&gt;/g, (match) => {
-      return saveToken(`<span class="text-slate-500 italic">${match}</span>`);
+      return saveToken(`<span class="text-slate-500">${match}</span>`);
     });
 
     // 2. Isolate attributes values (strings in double or single quotes inside tags)
@@ -43,7 +45,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
     // 3. Highlight HTML Tags & Attribute Names
     // Tag open/close: &lt;tag or &lt;/tag
     escaped = escaped.replace(/&lt;(\/?[a-zA-Z0-9:-]+)/g, (_, tagName) => {
-      return `&lt;<span class="text-rose-400 font-medium">${tagName}</span>`;
+      return `&lt;<span class="text-rose-400">${tagName}</span>`;
     });
 
     // Tag end boundaries: &gt; or /&gt;
@@ -63,7 +65,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
   } else if (language === 'css') {
     // 1. Isolate CSS Comments: /* ... */
     escaped = escaped.replace(/\/\*([\s\S]*?)\*\//g, (match) => {
-      return saveToken(`<span class="text-slate-500 italic">${match}</span>`);
+      return saveToken(`<span class="text-slate-500">${match}</span>`);
     });
 
     // 2. Isolate CSS strings: "..." or '...'
@@ -85,7 +87,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
         // Highlight numbers and units inside value
         let formattedVal = val.replace(/(\b\d+(px|em|rem|%|s|ms|deg)?\b|#[0-9a-fA-F]{3,8})/g, '<span class="text-pink-400">$1</span>');
         // Highlight system constants or standard words
-        formattedVal = formattedVal.replace(/\b(absolute|relative|fixed|block|flex|grid|none|inline|important)\b/g, '<span class="text-amber-300 font-bold">$1</span>');
+        formattedVal = formattedVal.replace(/\b(absolute|relative|fixed|block|flex|grid|none|inline|important)\b/g, '<span class="text-amber-300">$1</span>');
         return `: <span class="text-orange-300">${formattedVal}</span>${end}`;
       });
 
@@ -100,19 +102,19 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
     // Class names: .text-slate
     escaped = escaped.replace(/(\.[a-zA-Z-0-9_():\-\\\/]+)/g, '<span class="text-sky-400">$1</span>');
     // ID names: #my-id
-    escaped = escaped.replace(/(#[a-zA-Z-0-9_]+)/g, '<span class="text-amber-400 font-semibold">$1</span>');
+    escaped = escaped.replace(/(#[a-zA-Z-0-9_]+)/g, '<span class="text-amber-400">$1</span>');
     // Pseudo classes/selectors:hover, :active, ::after, ::before
     escaped = escaped.replace(/(::?[a-zA-Z-]+)/g, '<span class="text-violet-400">$1</span>');
 
   } else if (language === 'js') {
     // 1. Isolate Single and Multiline Comments
     escaped = escaped.replace(/\/\*([\s\S]*?)\*\//g, (match) => {
-      return saveToken(`<span class="text-slate-500 italic">${match}</span>`);
+      return saveToken(`<span class="text-slate-500">${match}</span>`);
     });
     // Single line comments (must be done carefully to avoid breaking URLs like https://)
     // We match // unless preceded by an alphanumeric/special URL characters, let's match standard comments:
     escaped = escaped.replace(/(^|[^\s:])\/\/([^\n]*)/g, (match, prefix, commentBody) => {
-      return prefix + saveToken(`<span class="text-slate-500 italic">//${commentBody}</span>`);
+      return prefix + saveToken(`<span class="text-slate-500">//${commentBody}</span>`);
     });
 
     // 2. Isolate Strings: "...", '...', `...`
@@ -135,7 +137,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
     ];
     const keywordsRegex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'g');
     escaped = escaped.replace(keywordsRegex, (_, match) => {
-      return saveToken(`<span class="text-indigo-400 font-semibold">${match}</span>`);
+      return saveToken(`<span class="text-indigo-400">${match}</span>`);
     });
 
     // 4. Built-ins and Globals highlight - wrapped in saveToken
@@ -151,7 +153,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
 
     // 5. Constants & Numbers: true, false, null, undefined, and values - wrapped in saveToken
     escaped = escaped.replace(/\b(true|false|null|undefined)\b/g, (_, match) => {
-      return saveToken(`<span class="text-amber-400 font-bold">${match}</span>`);
+      return saveToken(`<span class="text-amber-400">${match}</span>`);
     });
     
     // Now highlight numbers (since all text inside HTML class names of existing elements is safe within placeholder tokens, this is completely protected!)
