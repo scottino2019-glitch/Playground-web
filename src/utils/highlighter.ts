@@ -35,11 +35,12 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
 
     // 2. Isolate attributes values (strings in double or single quotes inside tags)
     // We look for patterns like `class="xyz"` as `class=&quot;xyz&quot;` or `class=&#039;xyz&#039;`
-    escaped = escaped.replace(/=\s*&quot;([\s\S]*?)&quot;/g, (_, val) => {
-      return saveToken(`=<span class="text-emerald-400">&quot;${val}&quot;</span>`);
+    // We match and preserve the equal sign and any surrounding spaces exactly
+    escaped = escaped.replace(/(=)(\s*)(&quot;[\s\S]*?&quot;)/g, (match, eq, spaces, quoted) => {
+      return eq + spaces + saveToken(`<span class="text-emerald-400">${quoted}</span>`);
     });
-    escaped = escaped.replace(/=\s*&#039;([\s\S]*?)&#039;/g, (_, val) => {
-      return saveToken(`=<span class="text-emerald-400">&#039;${val}&#039;</span>`);
+    escaped = escaped.replace(/(=)(\s*)(&#039;[\s\S]*?&#039;)/g, (match, eq, spaces, quoted) => {
+      return eq + spaces + saveToken(`<span class="text-emerald-400">${quoted}</span>`);
     });
 
     // 3. Highlight HTML Tags & Attribute Names
@@ -57,11 +58,6 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
       return `<span class="text-amber-400">${match}</span>`;
     });
 
-    // 4. Highlight lone attributes (boolean attributes like disabled, readOnly)
-    // Match attributes that are inside a tag but don't have a value: e.g. class="flex" disabled
-    // Let's keep it simple: any unhighlighted word inside tag boundaries could be highlighted.
-    // For general robustness, the above step covers 95% of classes and attributes beautifully.
-
   } else if (language === 'css') {
     // 1. Isolate CSS Comments: /* ... */
     escaped = escaped.replace(/\/\*([\s\S]*?)\*\//g, (match) => {
@@ -77,28 +73,25 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
     });
 
     // 3. Highlight Properties and Values inside brackets { ... }
+    // We capture the brackets and all their contents, then highlight properties and values
+    // by preserving every space, newline, tab, and hyphen 100% exactly.
     escaped = escaped.replace(/\{([\s\S]*?)\}/g, (match, inner) => {
-      // Highlight individual declarations (property: value;)
       let formattedInner = inner;
 
-      // Colorize property value part (right side of colon)
-      // e.g. padding: 12px; or color: #fff;
-      formattedInner = formattedInner.replace(/:\s*([^;]+)(;?)/g, (_: string, val: string, end: string) => {
-        // Highlight numbers and units inside value
+      // Match a valid CSS property name followed by optional whitespace, standard colon, optional whitespace, and then the property value
+      formattedInner = formattedInner.replace(/([a-zA-Z0-9_\-]+)(\s*:\s*)([^;]+)/g, (m, prop, colonAndSpace, val) => {
+        // Highlight numbers and units inside val, keeping characters and spacing intact
         let formattedVal = val.replace(/(\b\d+(px|em|rem|%|s|ms|deg)?\b|#[0-9a-fA-F]{3,8})/g, '<span class="text-pink-400">$1</span>');
-        // Highlight system constants or standard words
+        // Highlight standard CSS keywords
         formattedVal = formattedVal.replace(/\b(absolute|relative|fixed|block|flex|grid|none|inline|important)\b/g, '<span class="text-amber-300">$1</span>');
-        return `: <span class="text-orange-300">${formattedVal}</span>${end}`;
+        
+        return `<span class="text-indigo-300">${prop}</span>${colonAndSpace}<span class="text-orange-300">${formattedVal}</span>`;
       });
-
-      // Colorize property name (left side of colon)
-      // Any identifier before a colon
-      formattedInner = formattedInner.replace(/([a-zA-Z-0-8]+)\s*:/g, '<span class="text-indigo-300">$1</span>:');
 
       return `{${formattedInner}}`;
     });
 
-    // 4. Highlight Selectors: word class, ID, element selectors before bracket `{`
+    // 4. Highlight Selectors: class, ID, pseudo selectors
     // Class names: .text-slate
     escaped = escaped.replace(/(\.[a-zA-Z-0-9_():\-\\\/]+)/g, '<span class="text-sky-400">$1</span>');
     // ID names: #my-id
