@@ -126,7 +126,7 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
       return saveToken(`<span class="text-emerald-400">\`${val}\`</span>`);
     });
 
-    // 3. Keywords highlight
+    // 3. Keywords highlight - wrapped in saveToken to protect them from downstream passes
     const keywords = [
       'const', 'let', 'var', 'function', 'return', 'class', 'extends', 'new', 'this',
       'if', 'else', 'switch', 'case', 'break', 'continue', 'default',
@@ -134,20 +134,30 @@ export function highlightCode(code: string, language: 'html' | 'css' | 'js'): st
       'async', 'await', 'import', 'export', 'from'
     ];
     const keywordsRegex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'g');
-    escaped = escaped.replace(keywordsRegex, '<span class="text-indigo-400 font-semibold">$1</span>');
+    escaped = escaped.replace(keywordsRegex, (_, match) => {
+      return saveToken(`<span class="text-indigo-400 font-semibold">${match}</span>`);
+    });
 
-    // 4. Built-ins and Globals highlight
+    // 4. Built-ins and Globals highlight - wrapped in saveToken
     const builtins = [
       'console', 'log', 'error', 'warn', 'info', 'document', 'window', 'fetch', 'response',
       'addEventListener', 'querySelector', 'querySelectorAll', 'getElementById', 'setTimeout', 'setInterval',
       'JSON', 'stringify', 'parse', 'localStorage', 'getItem', 'setItem', 'removeItem', 'Object', 'Array', 'String', 'Number', 'Promise'
     ];
     const builtinsRegex = new RegExp(`\\b(${builtins.join('|')})\\b`, 'g');
-    escaped = escaped.replace(builtinsRegex, '<span class="text-sky-400">$1</span>');
+    escaped = escaped.replace(builtinsRegex, (_, match) => {
+      return saveToken(`<span class="text-sky-400">${match}</span>`);
+    });
 
-    // 5. Constants & Numbers: true, false, null, undefined, and values
-    escaped = escaped.replace(/\b(true|false|null|undefined)\b/g, '<span class="text-amber-400 font-bold">$1</span>');
-    escaped = escaped.replace(/\b(\d+)\b/g, '<span class="text-pink-400">$1</span>');
+    // 5. Constants & Numbers: true, false, null, undefined, and values - wrapped in saveToken
+    escaped = escaped.replace(/\b(true|false|null|undefined)\b/g, (_, match) => {
+      return saveToken(`<span class="text-amber-400 font-bold">${match}</span>`);
+    });
+    
+    // Now highlight numbers (since all text inside HTML class names of existing elements is safe within placeholder tokens, this is completely protected!)
+    escaped = escaped.replace(/\b(\d+)\b/g, (_, match) => {
+      return saveToken(`<span class="text-pink-400">${match}</span>`);
+    });
   }
 
   // Restore saved placeholders in reverse order (to handle nested or sequential ones)

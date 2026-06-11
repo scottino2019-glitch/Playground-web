@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Copy, Trash2, Code, Search, Sparkles, Check, WrapText } from 'lucide-react';
+import { Copy, Trash2, Code, Search, Sparkles, Check, WrapText, Paintbrush } from 'lucide-react';
 import { highlightCode } from '../utils/highlighter';
 
 interface CodeEditorProps {
@@ -25,6 +25,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [replaceTerm, setReplaceTerm] = useState('');
   const [wrapText, setWrapText] = useState(true);
+  const [syntaxHighlight, setSyntaxHighlight] = useState(true);
   const [selectionCount, setSelectionCount] = useState({ lines: 0, chars: 0 });
   
   // Custom states replacing native browser popups and hover menu instabilities
@@ -269,11 +270,25 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             )}
           </div>
 
+          {/* Syntax Highlight Toggle */}
+          <button
+            onClick={() => setSyntaxHighlight(!syntaxHighlight)}
+            title={syntaxHighlight ? "Cambia in Edit Semplice (disattiva colori)" : "Attiva Colori (Evidenziatore sintassi)"}
+            className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[11px] font-semibold ${
+              syntaxHighlight 
+                ? 'text-indigo-400 bg-indigo-500/10 hover:bg-slate-800' 
+                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-850'
+            }`}
+          >
+            <Paintbrush className="w-3.5 h-3.5" />
+            <span className="hidden leading-none xs:inline">{syntaxHighlight ? "Colori ON" : "Colori OFF"}</span>
+          </button>
+
           {/* Line Wrap Toggle */}
           <button
             onClick={() => setWrapText(!wrapText)}
             title={wrapText ? "Disattiva a capo automatico" : "Attiva a capo automatico"}
-            className={`p-1.5 rounded-lg transition-all cursor-pointer ${wrapText ? 'text-indigo-500 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-850'}`}
+            className={`p-1.5 rounded-lg transition-all cursor-pointer ${wrapText ? 'text-indigo-505 bg-indigo-500/5 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-850'}`}
           >
             <WrapText className="w-3.5 h-3.5" />
           </button>
@@ -374,19 +389,27 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         {/* Input Wrapper containing identical overlapping pre (backdrop) + textarea (input layer) */}
         <div className="flex-1 relative overflow-hidden h-full bg-slate-900/30">
           {/* Highlight Viewer Backdrop */}
-          <pre
-            ref={highlightRef}
-            className={`absolute inset-0 px-4 py-4 pointer-events-none select-none text-slate-100 font-mono text-[13px] leading-[20px] overflow-hidden ${
-              wrapText ? 'whitespace-pre-wrap break-all' : 'whitespace-pre overflow-x-hidden'
-            }`}
-            dangerouslySetInnerHTML={{ __html: highlightCode(value, language) }}
-          />
+          {syntaxHighlight && (
+            <pre
+              ref={highlightRef}
+              style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+              className={`absolute inset-0 w-full h-full px-4 py-4 pointer-events-none select-none text-slate-100 font-mono text-[13px] leading-[20px] border-0 m-0 overflow-y-scroll scrollbar-thin scrollbar-track-transparent scrollbar-thumb-transparent ${
+                wrapText ? 'whitespace-pre-wrap break-all overflow-x-hidden' : 'whitespace-pre overflow-x-auto'
+              }`}
+              dangerouslySetInnerHTML={{ __html: highlightCode(value, language) }}
+            />
+          )}
 
           {/* Code Input Layer (transparent text, visible caret) */}
           <textarea
             ref={textareaRef}
-            className={`absolute inset-0 w-full h-full px-4 py-4 bg-transparent text-transparent caret-indigo-400 outline-none resize-none overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 font-mono text-[13px] leading-[20px] ${
-              wrapText ? 'whitespace-pre-wrap break-all' : 'whitespace-pre overflow-x-auto'
+            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+            className={`absolute inset-0 w-full h-full px-4 py-4 bg-transparent outline-none resize-none overflow-y-scroll scrollbar-thin scrollbar-track-slate-900 scrollbar-thumb-slate-700 font-mono text-[13px] leading-[20px] border-0 m-0 ${
+              syntaxHighlight 
+                ? 'text-transparent caret-indigo-400' 
+                : 'text-slate-100 caret-white'
+            } ${
+              wrapText ? 'whitespace-pre-wrap break-all overflow-x-hidden' : 'whitespace-pre overflow-x-auto'
             }`}
             value={value}
             onChange={(e) => onChange(e.target.value)}
