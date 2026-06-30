@@ -31,6 +31,7 @@ export default function App() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activeProjectName, setActiveProjectName] = useState('Progetto Senza Nome');
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   // Custom interface togglers
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('tabs-vertical'); // default to custom tabs-vertical for better space ergonomics
@@ -107,9 +108,9 @@ export default function App() {
     if (savedDraft) {
       try {
         const draft = JSON.parse(savedDraft);
-        setHtml(draft.html || '');
-        setCss(draft.css || '');
-        setJs(draft.js || '');
+        setHtml(draft.html !== undefined ? draft.html : '');
+        setCss(draft.css !== undefined ? draft.css : '');
+        setJs(draft.js !== undefined ? draft.js : '');
         setActiveProjectId(draft.activeProjectId || null);
         setActiveProjectName(draft.activeProjectName || 'Modello Bozze');
         setEnableTailwind(draft.enableTailwind !== undefined ? draft.enableTailwind : true);
@@ -121,43 +122,44 @@ export default function App() {
       // Seed first user-experience with neon stopwatch
       loadDefaultTemplate();
     }
+    setIsLoaded(true);
   }, []);
 
   // Save current active code state to local storage draft in real-time (saving loss-protection)
   useEffect(() => {
-    if (html || css || js) {
-      const draftState = {
-        html,
-        css,
-        js,
-        activeProjectId,
-        activeProjectName,
-        enableTailwind,
-        layoutMode
-      };
-      localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(draftState));
+    if (!isLoaded) return;
 
-      // Overwrite active project's file states if it targets a saved model
-      if (activeProjectId) {
-        setProjects(prev => {
-          const updated = prev.map(p => {
-            if (p.id === activeProjectId) {
-              return {
-                ...p,
-                html,
-                css,
-                js,
-                updatedAt: new Date().toISOString()
-              };
-            }
-            return p;
-          });
-          localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(updated));
-          return updated;
+    const draftState = {
+      html,
+      css,
+      js,
+      activeProjectId,
+      activeProjectName,
+      enableTailwind,
+      layoutMode
+    };
+    localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(draftState));
+
+    // Overwrite active project's file states if it targets a saved model
+    if (activeProjectId) {
+      setProjects(prev => {
+        const updated = prev.map(p => {
+          if (p.id === activeProjectId) {
+            return {
+              ...p,
+              html,
+              css,
+              js,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return p;
         });
-      }
+        localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(updated));
+        return updated;
+      });
     }
-  }, [html, css, js, activeProjectId, activeProjectName, enableTailwind, layoutMode]);
+  }, [html, css, js, activeProjectId, activeProjectName, enableTailwind, layoutMode, isLoaded]);
 
   const loadDefaultTemplate = () => {
     const defaultTemp = templates.stopwatch;
@@ -198,6 +200,31 @@ export default function App() {
     // Set active
     setActiveProjectId(newProj.id);
     setActiveProjectName(newProj.name);
+  };
+
+  const handleCreateNewProject = (name: string) => {
+    const newProj: Project = {
+      id: Date.now().toString(),
+      name: name,
+      html: '',
+      css: '',
+      js: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const nextProjects = [...projects, newProj];
+    setProjects(nextProjects);
+    localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(nextProjects));
+    
+    // Set active
+    setHtml('');
+    setCss('');
+    setJs('');
+    setActiveProjectId(newProj.id);
+    setActiveProjectName(newProj.name);
+    setConsoleLogs([]); // reset visual console
+    showToast(`Progetto "${newProj.name}" creato vuoto con successo!`, 'success');
   };
 
   const handleDeleteProject = (id: string) => {
@@ -658,6 +685,7 @@ export default function App() {
               onDeleteProject={handleDeleteProject}
               onLoadTemplate={handleLoadTemplate}
               onImportProject={handleImportProject}
+              onCreateNewProject={handleCreateNewProject}
             />
           </section>
         )}

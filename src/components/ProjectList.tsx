@@ -11,6 +11,7 @@ interface ProjectListProps {
   onDeleteProject: (id: string) => void;
   onLoadTemplate: (templateKey: keyof typeof templates) => void;
   onImportProject: (imported: Project) => void;
+  onCreateNewProject: (name: string) => void;
 }
 
 export const ProjectList: React.FC<ProjectListProps> = ({
@@ -21,10 +22,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   onDeleteProject,
   onLoadTemplate,
   onImportProject,
+  onCreateNewProject,
 }) => {
   const [newProjectName, setNewProjectName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showImportError, setShowImportError] = useState(false);
+  
+  const [createdProjectName, setCreatedProjectName] = useState('');
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
   const handleSaveSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +37,15 @@ export const ProjectList: React.FC<ProjectListProps> = ({
       onSaveProject(newProjectName.trim());
       setNewProjectName('');
       setShowSaveModal(false);
+    }
+  };
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (createdProjectName.trim()) {
+      onCreateNewProject(createdProjectName.trim());
+      setCreatedProjectName('');
+      setShowNewProjectModal(false);
     }
   };
 
@@ -106,6 +120,16 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           {/* Action buttons */}
           <div className="flex items-center gap-2">
             
+            {/* New Project button */}
+            <button
+              onClick={() => setShowNewProjectModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-all active:scale-95 shadow-md shadow-emerald-600/10"
+              title="Crea un nuovo progetto vuoto da zero"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nuovo Progetto</span>
+            </button>
+
             {/* Save state button */}
             <button
               onClick={() => setShowSaveModal(true)}
@@ -212,6 +236,46 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                   className="px-4 py-2 bg-indigo-650 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold cursor-pointer"
                 >
                   Salva Progetto
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New blank project overlay popup modal */}
+      {showNewProjectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <h4 className="text-sm font-bold text-slate-200 mb-2 flex items-center gap-1.5">
+              <Plus className="w-4 h-4 text-emerald-400" />
+              <span>Crea Nuovo Progetto Vuoto</span>
+            </h4>
+            <p className="text-xs text-slate-400 mb-4">Inizia un nuovo progetto da zero con file HTML, CSS e JS completamente vuoti.</p>
+            
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <input
+                type="text"
+                placeholder="es. Esercizio Calcolatrice"
+                required
+                value={createdProjectName}
+                onChange={(e) => setCreatedProjectName(e.target.value)}
+                autoFocus
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-100 outline-none focus:border-emerald-500 transition-all"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowNewProjectModal(false)}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Crea Progetto
                 </button>
               </div>
             </form>
